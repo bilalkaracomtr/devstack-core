@@ -1,0 +1,126 @@
+networks:
+  core:
+    name: core_net
+    driver: bridge
+
+services:
+  nginx:
+    image: nginx:1.29.0
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./services/nginx/conf.d:/etc/nginx/conf.d
+      - ./volumes/nginx/logs:/var/log/nginx
+    networks:
+      - core
+  
+  redis:
+    image: redis:7.4.5
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - ./volumes/redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - core
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - core
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./volumes/minio/data:/data
+      - ./volumes/minio/config:/root/.minio
+    command: server /data --console-address ":9001"
+    networks:
+      - core
+
+  postgres:
+    image: postgres:17.5
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - core
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - ./volumes/pgadmin:/var/lib/pgadmin
+    networks:
+      - core
+  
+  mysql:
+    image: mysql:8.4.5
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - core
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 100M 
+    networks:
+      - core
+  
+  php84:
+    build:
+      context: ./services/php/php84
+      dockerfile: Dockerfile
+    container_name: php84
+    restart: unless-stopped
+    volumes:
+      - ../tests/laravel:/var/www/html/laravel
+      - ../tests/symfony:/var/www/html/symfony
+      - ../tests/bagisto:/var/www/html/bagisto
+    networks:
+      - core

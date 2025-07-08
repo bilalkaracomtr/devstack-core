@@ -1,0 +1,24 @@
+# Ortam dosyaları (gizli bilgiler)
+.env
+.env.local
+.env.*.local
+
+# Volume klasörleri – sadece yapıyı koru, içeriği dışla
+volumes/**/*
+!volumes/**/.gitkeep
+
+# Node.js / build cache (opsiyonel ama faydalı)
+**/node_modules/
+**/dist/
+
+# Genel sistem & editör dosyaları
+.DS_Store
+.vscode/
+.idea/
+
+# Gereksiz runtime dosyaları
+*.pid
+*.sock
+*.log
+*.tmp
+__pycache__/
